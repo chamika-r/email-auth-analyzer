@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Auth Analyzer</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #0a0e14;
+            color: #e4e9f0;
+            font-family: -apple-system, 'Inter', 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            padding: 32px 20px;
+        }
+
+        .page { max-width: 820px; margin: 0 auto; }
+
+        /* ── Topbar ── */
+        .topbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 36px;
+            padding-bottom: 20px;
+            border-bottom: 0.5px solid #1e2a38;
+        }
+
+        .logo-ring {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #ff5c7c18;
+            border: 1px solid #ff5c7c33;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .logo-ring i { font-size: 18px; color: #ff5c7c; }
+
+        .topbar-text h1 { font-size: 16px; font-weight: 500; }
+        .topbar-text p  { font-size: 13px; color: #5a6678; margin-top: 2px; }
+
+        .topbar-right { margin-left: auto; }
+
+        .live-chip {
+            background: #00ffc218;
+            color: #00ffc2;
+            border: 1px solid #00ffc233;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #00ffc2;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.3; }
+        }
+
+        /* ── Section label ── */
+        .section-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.8px;
+            color: #5a6678;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        /* ── Upload zone ── */
+        .upload-zone {
+            border: 1.5px dashed #1e2a38;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            margin-bottom: 16px;
+            background: #0e1219;
+        }
+
+        .upload-zone:hover         { border-color: #00ffe5; background: #0e121f; }
+        .upload-zone.drag-over     { border-color: #00ffe5; background: #0e121f; }
+        .upload-zone i             { font-size: 36px; color: #2a3a4a; display: block; margin-bottom: 12px; }
+        .upload-zone .uz-title     { font-size: 14px; color: #c8d8e8; margin-bottom: 4px; }
+        .upload-zone .uz-sub       { font-size: 12px; color: #5a6678; }
+        .upload-zone .uz-filename  { font-size: 13px; color: #00ffe5; margin-top: 10px; font-weight: 500; }
+
+        input[type="file"] { display: none; }
+
+        /* ── Buttons ── */
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 36px;
+        }
+
+        .btn-analyze {
+            background: #00ffe5;
+            color: #0a0e14;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: opacity 0.2s;
+        }
+
+        .btn-analyze:hover    { opacity: 0.85; }
+        .btn-analyze:disabled { opacity: 0.35; cursor: not-allowed; }
+        .btn-analyze i        { font-size: 16px; }
+
+        .btn-secondary {
+            background: #0e1219;
+            color: #c8d8e8;
+            border: 0.5px solid #1e2a38;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .btn-secondary:hover { border-color: #2e3a48; }
+
+        /* ── Loading ── */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 48px;
+            color: #5a6678;
+            font-size: 14px;
+        }
+
+        .loading i { font-size: 28px; display: block; margin-bottom: 10px; color: #00ffe5; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Error ── */
+        .error-bar {
+            display: none;
+            background: #ff5c7c11;
+            border: 0.5px solid #ff5c7c33;
+            color: #ff5c7c;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 24px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* ── Results ── */
+        #results { display: none; }
+
+        /* Risk banner */
+        .risk-banner {
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border: 0.5px solid;
+        }
+
+        .risk-CRITICAL { background: #ff5c7c11; border-color: #ff5c7c33; }
+        .risk-HIGH     { background: #ffa94d11; border-color: #ffa94d33; }
+        .risk-MEDIUM   { background: #ffd43b11; border-color: #ffd43b33; }
+        .risk-LOW      { background: #00ffc211; border-color: #00ffc233; }
+
+        .risk-score-block { text-align: center; min-width: 70px; }
+
+        .risk-num { font-size: 44px; font-weight: 500; line-height: 1; }
+        .risk-num-CRITICAL { color: #ff5c7c; }
+        .risk-num-HIGH     { color: #ffa94d; }
+        .risk-num-MEDIUM   { color: #ffd43b; }
+        .risk-num-LOW      { color: #00ffc2; }
+
+        .risk-num-label { font-size: 11px; color: #5a6678; margin-top: 3px; }
+
+        .risk-divider { width: 0.5px; background: #1e2a38; align-self: stretch; }
+
+        .risk-meta { flex: 1; }
+        .risk-meta .from { font-size: 14px; font-weight: 500; margin-bottom: 3px; word-break: break-all; }
+        .risk-meta .subject { font-size: 13px; color: #5a6678; margin-bottom: 12px; }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+        }
+
+        .badge-CRITICAL { background: #ff5c7c; color: #0a0e14; }
+        .badge-HIGH     { background: #ffa94d; color: #0a0e14; }
+        .badge-MEDIUM   { background: #ffd43b; color: #0a0e14; }
+        .badge-LOW      { background: #00ffc2; color: #0a0e14; }
+
+        /* Email meta grid */
+        .email-meta {
+            background: #0e1219;
+            border: 0.5px solid #1e2a38;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .meta-item { display: flex; flex-direction: column; gap: 3px; }
+        .meta-key  { font-size: 11px; color: #5a6678; text-transform: uppercase; letter-spacing: 0.5px; }
+        .meta-val  { font-size: 13px; color: #c8d8e8; font-weight: 500; word-break: break-all; }
+        .meta-val.danger { color: #ff5c7c; }
+
+        /* Findings */
+        .findings-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .finding {
+            background: #0e1219;
+            border: 0.5px solid #1e2a38;
+            border-left: 3px solid;
+            border-radius: 0 8px 8px 0;
+            padding: 12px 16px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .finding-CRITICAL { border-left-color: #ff5c7c; }
+        .finding-HIGH     { border-left-color: #ffa94d; }
+        .finding-MEDIUM   { border-left-color: #ffd43b; }
+        .finding-LOW      { border-left-color: #00ffc2; }
+
+        .finding-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .ficon-CRITICAL { background: #ff5c7c18; }
+        .ficon-CRITICAL i { color: #ff5c7c; font-size: 15px; }
+        .ficon-HIGH     { background: #ffa94d18; }
+        .ficon-HIGH i   { color: #ffa94d; font-size: 15px; }
+        .ficon-MEDIUM   { background: #ffd43b18; }
+        .ficon-MEDIUM i { color: #ffd43b; font-size: 15px; }
+        .ficon-LOW      { background: #00ffc218; }
+        .ficon-LOW i    { color: #00ffc2; font-size: 15px; }
+
+        .finding-body { flex: 1; }
+
+        .finding-head {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 3px;
+        }
+
+        .finding-title { font-size: 13px; font-weight: 500; }
+
+        .finding-chip {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+            letter-spacing: 0.3px;
+        }
+
+        .fchip-CRITICAL { background: #ff5c7c22; color: #ff5c7c; }
+        .fchip-HIGH     { background: #ffa94d22; color: #ffa94d; }
+        .fchip-MEDIUM   { background: #ffd43b22; color: #ffd43b; }
+        .fchip-LOW      { background: #00ffc222; color: #00ffc2; }
+
+        .finding-detail { font-size: 12px; color: #5a6678; line-height: 1.55; }
+
+        /* Auth cards */
+        .auth-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .auth-card {
+            background: #0e1219;
+            border: 0.5px solid #1e2a38;
+            border-radius: 8px;
+            padding: 14px 16px;
+            text-align: center;
+        }
+
+        .auth-card .label { font-size: 11px; color: #5a6678; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+        .auth-card .val   { font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .auth-card .val i { font-size: 15px; }
+
+        .val-pass { color: #00ffc2; }
+        .val-fail { color: #ff5c7c; }
+        .val-none { color: #5a6678; }
+
+        /* DNS card */
+        .dns-card {
+            background: #0e1219;
+            border: 0.5px solid #1e2a38;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .dns-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 12px 16px;
+            border-bottom: 0.5px solid #1a2330;
+            gap: 16px;
+        }
+
+        .dns-row:last-child { border-bottom: none; }
+        .dns-key { font-size: 12px; color: #5a6678; flex-shrink: 0; padding-top: 1px; }
+        .dns-val { font-size: 12px; color: #c8d8e8; text-align: right; word-break: break-all; max-width: 68%; }
+        .dns-val.missing { color: #ff5c7c; }
+
+        /* Clean state */
+        .clean-state {
+            text-align: center;
+            padding: 36px;
+            color: #00ffc2;
+        }
+
+        .clean-state i { font-size: 40px; display: block; margin-bottom: 12px; }
+        .clean-state p { font-size: 14px; }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="logo-ring">
+            <i class="ti ti-shield-check" aria-hidden="true"></i>
+        </div>
+        <div class="topbar-text">
+            <h1>Email auth analyzer</h1>
+            <p>BEC detection · SPF · DKIM · DMARC · lookalike domains</p>
+        </div>
+        <div class="topbar-right">
+            <div class="live-chip">
+                <div class="live-dot"></div>
+                Live DNS
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload -->
+    <div class="section-label">Upload</div>
+    <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <i class="ti ti-mail-opened" aria-hidden="true"></i>
+        <div class="uz-title">Drop an .eml file here or click to browse</div>
+        <div class="uz-sub">.eml files only · max 5 MB</div>
+        <div class="uz-filename" id="fileName"></div>
+    </div>
+    <input type="file" id="fileInput" accept=".eml">
+
+    <div class="btn-row">
+        <button class="btn-analyze" id="analyzeBtn" onclick="analyzeEmail()" disabled>
+            <i class="ti ti-scan" aria-hidden="true"></i>
+            Analyze email
+        </button>
+        <button class="btn-secondary" onclick="loadSample()">Load sample</button>
+    </div>
+
+    <!-- Error -->
+    <div class="error-bar" id="errorBar">
+        <i class="ti ti-alert-circle" aria-hidden="true"></i>
+        <span id="errorText"></span>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading" id="loading">
+        <i class="ti ti-loader-2" aria-hidden="true"></i>
+        Analyzing email and performing DNS lookups...
+    </div>
+
+    <!-- Results -->
+    <div id="results">
+
+        <div class="section-label" id="resultsLabel">Results</div>
+
+        <!-- Risk banner -->
+        <div class="risk-banner" id="riskBanner">
+            <div class="risk-score-block">
+                <div class="risk-num" id="riskNum">—</div>
+                <div class="risk-num-label">/ 100</div>
+            </div>
+            <div class="risk-divider"></div>
+            <div class="risk-meta">
+                <div class="from" id="resFrom">—</div>
+                <div class="subject" id="resSubject">—</div>
+                <span class="risk-badge" id="resBadge">—</span>
+            </div>
+        </div>
+
+        <!-- Email meta -->
+        <div class="email-meta">
+            <div class="meta-item">
+                <span class="meta-key">From domain</span>
+                <span class="meta-val" id="metaFromDomain">—</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-key">Reply-To domain</span>
+                <span class="meta-val" id="metaReplyTo">—</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-key">Date</span>
+                <span class="meta-val" id="metaDate">—</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-key">Auth server</span>
+                <span class="meta-val" id="metaAuthServer">—</span>
+            </div>
+        </div>
+
+        <!-- Findings -->
+        <div class="section-label" id="findingsLabel">Findings</div>
+        <div class="findings-list" id="findingsList"></div>
+
+        <!-- Auth cards -->
+        <div class="section-label">Authentication</div>
+        <div class="auth-grid">
+            <div class="auth-card">
+                <div class="label">SPF</div>
+                <div class="val" id="authSpf">—</div>
+            </div>
+            <div class="auth-card">
+                <div class="label">DKIM</div>
+                <div class="val" id="authDkim">—</div>
+            </div>
+            <div class="auth-card">
+                <div class="label">DMARC</div>
+                <div class="val" id="authDmarc">—</div>
+            </div>
+        </div>
+
+        <!-- DNS -->
+        <div class="section-label">DNS records</div>
+        <div class="dns-card" id="dnsCard"></div>
+
+    </div>
+
+</div>
+
+<script>
+    const fileInput  = document.getElementById('fileInput');
+    const dropZone   = document.getElementById('dropZone');
+    const fileName   = document.getElementById('fileName');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+
+    const FINDING_ICONS = {
+        'Lookalike Domain':   'ti-world-off',
+        'Reply-To Mismatch':  'ti-mail-forward',
+        'SPF':                'ti-shield-x',
+        'DKIM':               'ti-signature-off',
+        'DMARC':              'ti-shield-half',
+        'SPF Record':         'ti-file-x',
+        'DMARC Record':       'ti-file-alert',
+    };
+
+    function iconFor(check) {
+        for (const [key, cls] of Object.entries(FINDING_ICONS)) {
+            if (check.includes(key)) return cls;
+        }
+        return 'ti-alert-circle';
+    }
+
+    function authVal(v) {
+        if (v === 'pass') return `<i class="ti ti-circle-check" aria-hidden="true"></i><span class="val-pass">Pass</span>`;
+        if (v === 'fail') return `<i class="ti ti-circle-x" aria-hidden="true"></i><span class="val-fail">Fail</span>`;
+        return `<span class="val-none">—</span>`;
+    }
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            fileName.textContent = fileInput.files[0].name;
+            analyzeBtn.disabled = false;
+        }
+    });
+
+    dropZone.addEventListener('dragover', e => {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('drag-over');
+    });
+
+    dropZone.addEventListener('drop', e => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file && file.name.endsWith('.eml')) {
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            fileInput.files = dt.files;
+            fileName.textContent = file.name;
+            analyzeBtn.disabled = false;
+        }
+    });
+
+    function showError(msg) {
+        const bar = document.getElementById('errorBar');
+        document.getElementById('errorText').textContent = msg;
+        bar.style.display = 'flex';
+    }
+
+    function hideError() {
+        document.getElementById('errorBar').style.display = 'none';
+    }
+
+    function populateResults(data) {
+        const risk = data.risk;
+
+        document.getElementById('riskBanner').className = `risk-banner risk-${risk}`;
+        document.getElementById('riskNum').className    = `risk-num risk-num-${risk}`;
+        document.getElementById('riskNum').textContent  = data.score;
+        document.getElementById('resFrom').textContent  = data.from    || '—';
+        document.getElementById('resSubject').textContent = data.subject || '—';
+
+        const badge = document.getElementById('resBadge');
+        badge.textContent = risk;
+        badge.className   = `risk-badge badge-${risk}`;
+
+        document.getElementById('metaFromDomain').textContent = data.from_domain || '—';
+
+        const replyEl = document.getElementById('metaReplyTo');
+        const replyDomain = data.reply_to ? data.reply_to.replace(/.*@/, '') : '—';
+        replyEl.textContent = replyDomain;
+        replyEl.className   = 'meta-val' + (data.reply_to && replyDomain !== data.from_domain ? ' danger' : '');
+
+        document.getElementById('metaDate').textContent = data.date || '—';
+
+        const authServer = data.auth_results && data.auth_results.length
+            ? data.auth_results[data.auth_results.length - 1].authserv_id
+            : '—';
+        document.getElementById('metaAuthServer').textContent = authServer;
+
+        // Findings
+        const list = document.getElementById('findingsList');
+        document.getElementById('findingsLabel').textContent =
+            `Findings (${data.findings.length})`;
+
+        if (data.findings.length === 0) {
+            list.innerHTML = `<div class="clean-state">
+                <i class="ti ti-circle-check" aria-hidden="true"></i>
+                <p>No issues found — email passed all checks.</p>
+            </div>`;
+        } else {
+            list.innerHTML = data.findings.map(f => `
+                <div class="finding finding-${f.severity}">
+                    <div class="finding-icon ficon-${f.severity}">
+                        <i class="ti ${iconFor(f.check)}" aria-hidden="true"></i>
+                    </div>
+                    <div class="finding-body">
+                        <div class="finding-head">
+                            <span class="finding-title">${f.check}</span>
+                            <span class="finding-chip fchip-${f.severity}">${f.severity}</span>
+                        </div>
+                        <div class="finding-detail">${f.detail}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Auth cards
+        const last = data.auth_results && data.auth_results.length
+            ? data.auth_results[data.auth_results.length - 1]
+            : { spf: 'none', dkim: 'none', dmarc: 'none' };
+
+        document.getElementById('authSpf').innerHTML   = authVal(last.spf);
+        document.getElementById('authDkim').innerHTML  = authVal(last.dkim);
+        document.getElementById('authDmarc').innerHTML = authVal(last.dmarc);
+
+        // DNS card
+        const spfRecord   = data.spf_record || null;
+        const dmarcPolicy = data.dmarc_record ? data.dmarc_record.policy : null;
+
+        document.getElementById('dnsCard').innerHTML = `
+            <div class="dns-row">
+                <span class="dns-key">SPF record</span>
+                <span class="dns-val ${spfRecord ? '' : 'missing'}">${spfRecord ? spfRecord.substring(0, 80) + (spfRecord.length > 80 ? '…' : '') : 'Not found'}</span>
+            </div>
+            <div class="dns-row">
+                <span class="dns-key">DMARC policy</span>
+                <span class="dns-val ${dmarcPolicy ? '' : 'missing'}">${dmarcPolicy || 'Not found'}</span>
+            </div>
+            <div class="dns-row">
+                <span class="dns-key">Auth server</span>
+                <span class="dns-val">${authServer}</span>
+            </div>
+        `;
+
+        document.getElementById('results').style.display = 'block';
+    }
+
+    async function analyzeEmail() {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        hideError();
+        document.getElementById('results').style.display = 'none';
+        document.getElementById('loading').style.display = 'block';
+        analyzeBtn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res  = await fetch('/analyze', { method: 'POST', body: formData });
+            const data = await res.json();
+
+            if (data.error) { showError(data.error); return; }
+            populateResults(data);
+        } catch (err) {
+            showError('Analysis failed — please try again.');
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+            analyzeBtn.disabled = false;
+        }
+    }
+
+    function loadSample() {
+        alert('Place a .eml file in sample_emails/ and upload it manually.');
+    }
+</script>
+</body>
+</html>
