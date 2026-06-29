@@ -1,0 +1,16 @@
+Return-Path: <support@paypa1-security.com>
+Received: from mail.paypa1-security.com (mail.paypa1-security.com [185.234.219.1])
+        by mx.google.com with ESMTP id xyz456
+        for <victim@gmail.com>; Mon, 15 Jun 2026 10:00:00 -0700
+Authentication-Results: mx.google.com;
+       dkim=fail header.i=@paypa1-security.com;
+       spf=fail smtp.mailfrom=support@paypa1-security.com;
+       dmarc=fail header.from=paypa1-security.com
+From: PayPal Security <support@paypa1-security.com>
+Reply-To: collect@evil-harvest.com
+Date: Mon, 15 Jun 2026 10:00:00 -0700
+Subject: Urgent: Your account has been suspended
+Message-ID: <xyz456@paypa1-security.com>
+Content-Type: text/plain; charset=UTF-8
+
+Your PayPal account has been suspended. Click here immediately to restore access.
