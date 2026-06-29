@@ -58,9 +58,22 @@ def similarity_score(s1, s2):
 
 
 def strip_tld(domain):
-    """Remove TLD for comparison — 'paypal.com' → 'paypal'."""
+    """Remove TLD for comparison — also strips subdomains and suffixes.
+    'paypa1-security.com' → 'paypa1'
+    'mail.paypal.com' → 'paypal'
+    'paypal.co.uk' → 'paypal'
+    """
+    # Remove known TLDs and suffixes
+    domain = domain.replace('.co.uk', '').replace('.com', '').replace(
+        '.net', '').replace('.org', '').replace('.io', '')
+    # Take the last meaningful segment before any hyphen-appended words
+    # e.g. 'paypa1-security' → 'paypa1'
+    parts = domain.split('-')
+    domain = parts[0]
+    # Also handle subdomains — take the last part
+    # e.g. 'mail.paypal' → 'paypal'
     parts = domain.split('.')
-    return parts[0] if len(parts) >= 2 else domain
+    return parts[-1] if parts else domain
 
 
 def check_lookalike(domain, threshold=0.75):
