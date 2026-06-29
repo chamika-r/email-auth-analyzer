@@ -1,0 +1,17 @@
+Return-Path: <notifications@github.com>
+Received: from mail.github.com (mail.github.com [192.30.252.1])
+        by mx.google.com with ESMTPS id abc123
+        for <user@gmail.com>; Mon, 15 Jun 2026 10:00:00 -0700
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@github.com;
+       spf=pass smtp.mailfrom=notifications@github.com;
+       dmarc=pass header.from=github.com
+DKIM-Signature: v=1; a=rsa-sha256; d=github.com; s=pf2023; bh=abc; b=xyz
+From: GitHub <notifications@github.com>
+Reply-To: notifications@github.com
+Date: Mon, 15 Jun 2026 10:00:00 -0700
+Subject: [GitHub] New pull request opened
+Message-ID: <abc123@github.com>
+Content-Type: text/plain; charset=UTF-8
+
+A new pull request was opened on your repository.
